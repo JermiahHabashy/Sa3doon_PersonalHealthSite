@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link rel="stylesheet" href="../static/css/styles.css">
+	{% import "bootstrap/wtf.html" as wtf %}
+</head>
+<body>
+	{{ wtf.quick_form(health_form) }}
+	<p>BMR: {{BMR}}</p>
+	<p>Bulk: {{BMR+300}}</p>
+	<p>Cut: {{BMR-300}}</p>
+	{% block show_next_page_url %}
+		{% if BMR != 0 %}
+		<a href="{{ url_for('macros') }}">Go to macro's page</a>
+		{% endif %}
+	{% endblock show_next_page_url %}
+</body>
+</html>

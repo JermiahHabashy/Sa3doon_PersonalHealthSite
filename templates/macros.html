@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Macro's</title>
+	{% import "bootstrap/wtf.html" as wtf %}
+</head>
+<body>
+	{{ wtf.quick_form(macros_table) }}
+	{{ macros_table.table }}
+</body>
+</html>
