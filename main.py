@@ -3,8 +3,9 @@ import flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from wtforms import SelectField, DecimalField, IntegerField, SubmitField
+from wtforms import SelectField, DecimalField, IntegerField, SubmitField, StringField
 from wtforms.validators import InputRequired, NumberRange
+from flask import request
 from wtforms.widgets import TableWidget, TextInput
 
 app = flask.Flask(__name__)
@@ -38,16 +39,27 @@ def home():
 	return flask.render_template("index.html", health_form=health_form, BMR=BMR)
 
 
+class AllFoodsForm(FlaskForm):
+	update = SubmitField("Update")
+	add_row = SubmitField("Add new row")
+
 class MacrosTableForm(FlaskForm):
-	table = TableWidget("test")
-	food_name = TextInput("test")
+	food_quantity = IntegerField(validators=[InputRequired()])
+	food_name = StringField(validators=[InputRequired()])
 
+@app.route('/macros', methods=["GET", "POST"])
+def macros(list_of_foods=None):
+	if list_of_foods is None:
+		list_of_foods = []
+	all_foods: AllFoodsForm = AllFoodsForm()
 
+	if request.method == 'POST':
+		if all_foods.add_row.data:
+			list_of_foods.append(MacrosTableForm())
+			print(len(list_of_foods))
+			all_foods.add_row.data = False
 
-@app.route('/macros', methods=["GET"])
-def macros():
-	macros_table: MacrosTableForm = MacrosTableForm()
-	return flask.render_template("macros.html", macros_table=macros_table)
+	return flask.render_template("macros.html", all_foods=all_foods, list_of_foods=list_of_foods)
 
 
 if __name__ == "__main__":

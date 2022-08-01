@@ -6,7 +6,29 @@
 	{% import "bootstrap/wtf.html" as wtf %}
 </head>
 <body>
-	{{ wtf.quick_form(macros_table) }}
-	{{ macros_table.table }}
+	<table>
+		<tr>
+			<th>Quantity</th>
+			<th>Food item</th>
+			<th>Protein</th>
+			<th>Carbs</th>
+			<th>Fat</th>
+			<th>Calories</th>
+		</tr>
+		{% for food in list_of_foods %}
+		<tr>
+			<td>{{ food.food_quantity }}</td>
+			<td>{{ food.food_name }}</td>
+			<td>0</td>
+			<td>0</td>
+			<td>0</td>
+			<td>0</td>
+		</tr>
+		{% endfor %}
+	</table>
+	<form method= "post" action={{url_for('macros')}} >
+		{{ all_foods.add_row }}
+		{{ all_foods.update }}
+	</form>
 </body>
 </html>
