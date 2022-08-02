@@ -14,8 +14,8 @@ class HealthForm(FlaskForm):
 
 
 class MacrosRow(FlaskForm):
-	food_quantity = IntegerField(validators=[InputRequired()])
-	food_name = StringField(validators=[InputRequired()])
+	food_name = StringField()
+	food_quantity = DecimalField()
 
 
 class MacrosTable(FlaskForm):

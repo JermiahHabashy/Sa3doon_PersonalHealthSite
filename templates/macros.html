@@ -9,17 +9,17 @@
 	<form method= "post" action={{url_for('macros')}} >
 	<table>
 		<tr>
-			<th>Quantity</th>
 			<th>Food item</th>
-			<th>Protein</th>
+			<th>Quantity</th>
+			<th>Proteins</th>
 			<th>Carbs</th>
-			<th>Fat</th>
+			<th>Fats</th>
 			<th>Calories</th>
 		</tr>
 		{% for food in macros_table.macro_rows %}
 		<tr>
-			<td>{{ food.food_quantity }}</td>
 			<td>{{ food.food_name }}</td>
+			<td>{{ food.food_quantity }}</td>
 			<td>0</td>
 			<td>0</td>
 			<td>0</td>

@@ -3,13 +3,29 @@ import flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask import request
-from static.scripts.forms import HealthForm, MacrosTable
+from static.scripts.forms import HealthForm, MacrosTable, MacrosRow
 
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 
 Bootstrap(app)
+# connect to db
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///static/database/macros.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db: SQLAlchemy = SQLAlchemy(app)
 
+# config table
+class Macros(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	food_name = db.Column(db.String(250), nullable=False)
+	food_quantity = db.Column(db.DECIMAL(5, 2), nullable=False)
+	proteins = db.Column(db.Integer)
+	carbs = db.Column(db.Integer)
+	fats = db.Column(db.Integer)
+	calories = db.Column(db.Integer)
+
+
+db.create_all()
 
 @app.route('/', methods=["GET", "POST"])
 def home():
@@ -35,12 +51,24 @@ def home():
 def macros():
 	macros_table: MacrosTable = MacrosTable()
 	if request.method == 'POST':
+		# add new table row
 		if macros_table.btn_add_row.data:
-			macros_table.macro_rows.append_entry()
 			macros_table.btn_add_row.data = False
-		elif macros_table.btn_remove_last_row and len(macros_table.macro_rows.entries) > 1:
-			macros_table.macro_rows.pop_entry()
+			macros_table.macro_rows.append_entry()
+
+		# remove last row only if you more than 1 entry
+		elif macros_table.btn_remove_last_row.data and len(macros_table.macro_rows.entries) > 1:
 			macros_table.btn_remove_last_row.data = False
+			macros_table.macro_rows.pop_entry()
+
+		# post data to database
+		# find better API
+		elif macros_table.btn_update.data:
+			macros_table.btn_update.data = False
+			food: MacrosRow
+			for food in macros_table.macro_rows.entries:
+				print(food.food_name.data)
+				print(food.food_quantity.data)
 
 	return flask.render_template("macros.html", macros_table=macros_table)
 
