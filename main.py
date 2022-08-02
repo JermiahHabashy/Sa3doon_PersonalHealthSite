@@ -2,24 +2,13 @@ import os
 import flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf import FlaskForm
-from wtforms import SelectField, DecimalField, IntegerField, SubmitField, StringField
-from wtforms.validators import InputRequired, NumberRange
 from flask import request
-from wtforms.widgets import TableWidget, TextInput
+from static.scripts.forms import HealthForm, MacrosTable
 
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 
 Bootstrap(app)
-
-
-class HealthForm(FlaskForm):
-	sex = SelectField("What's your sex?", choices=[("Male", "Male"), ("Female", "Female")])
-	weight = DecimalField("Weight (in kg)", places=2, validators=[InputRequired()])
-	height = DecimalField("Height (in cm)", places=2, validators=[InputRequired()])
-	age = IntegerField("Age", validators=[InputRequired(), NumberRange(min=12, max=99)])
-	submit = SubmitField("Submit")
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -39,27 +28,19 @@ def home():
 	return flask.render_template("index.html", health_form=health_form, BMR=BMR)
 
 
-class AllFoodsForm(FlaskForm):
-	update = SubmitField("Update")
-	add_row = SubmitField("Add new row")
 
-class MacrosTableForm(FlaskForm):
-	food_quantity = IntegerField(validators=[InputRequired()])
-	food_name = StringField(validators=[InputRequired()])
+
 
 @app.route('/macros', methods=["GET", "POST"])
-def macros(list_of_foods=None):
-	if list_of_foods is None:
-		list_of_foods = []
-	all_foods: AllFoodsForm = AllFoodsForm()
-
+def macros():
+	macros_table: MacrosTable = MacrosTable()
 	if request.method == 'POST':
-		if all_foods.add_row.data:
-			list_of_foods.append(MacrosTableForm())
-			print(len(list_of_foods))
-			all_foods.add_row.data = False
+		if macros_table.btn_add_row.data:
+			macros_table.macro_rows.append_entry()
+			macros_table.btn_add_row.data = False
 
-	return flask.render_template("macros.html", all_foods=all_foods, list_of_foods=list_of_foods)
+	return flask.render_template("macros.html", macros_table=macros_table)
+
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@
 	{% import "bootstrap/wtf.html" as wtf %}
 </head>
 <body>
+	<form method= "post" action={{url_for('macros')}} >
 	<table>
 		<tr>
 			<th>Quantity</th>
@@ -15,7 +16,7 @@
 			<th>Fat</th>
 			<th>Calories</th>
 		</tr>
-		{% for food in list_of_foods %}
+		{% for food in macros_table.macro_rows %}
 		<tr>
 			<td>{{ food.food_quantity }}</td>
 			<td>{{ food.food_name }}</td>
@@ -26,9 +27,9 @@
 		</tr>
 		{% endfor %}
 	</table>
-	<form method= "post" action={{url_for('macros')}} >
-		{{ all_foods.add_row }}
-		{{ all_foods.update }}
+
+		{{ macros_table.btn_add_row }}
+		{{ macros_table.btn_update }}
 	</form>
 </body>
 </html>
