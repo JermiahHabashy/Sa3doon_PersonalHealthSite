@@ -19,6 +19,7 @@ class MacrosRow(FlaskForm):
 
 
 class MacrosTable(FlaskForm):
-	macro_rows = FieldList(FormField(MacrosRow), min_entries=3)
+	macro_rows = FieldList(FormField(MacrosRow), min_entries=1)
 	btn_update = SubmitField("Update")
 	btn_add_row = SubmitField("Add new row")
+	btn_remove_last_row = SubmitField("Remove last row")

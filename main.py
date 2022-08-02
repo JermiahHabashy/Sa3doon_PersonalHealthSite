@@ -38,6 +38,9 @@ def macros():
 		if macros_table.btn_add_row.data:
 			macros_table.macro_rows.append_entry()
 			macros_table.btn_add_row.data = False
+		elif macros_table.btn_remove_last_row and len(macros_table.macro_rows.entries) > 1:
+			macros_table.macro_rows.pop_entry()
+			macros_table.btn_remove_last_row.data = False
 
 	return flask.render_template("macros.html", macros_table=macros_table)
 
