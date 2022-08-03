@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import SelectField, DecimalField, IntegerField, SubmitField, StringField, FieldList, FormField
+from wtforms import SelectField, DecimalField, IntegerField, SubmitField, StringField, FieldList, FormField, Label
 from wtforms.validators import InputRequired, NumberRange
 
 
@@ -16,6 +16,7 @@ class HealthForm(FlaskForm):
 class MacrosRow(FlaskForm):
 	food_name = StringField()
 	food_quantity = DecimalField()
+	macros = (0, 0, 0, 0)
 
 
 class MacrosTable(FlaskForm):
