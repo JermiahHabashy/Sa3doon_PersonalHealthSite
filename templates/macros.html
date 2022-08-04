@@ -10,22 +10,24 @@
 	<table>
 		<tr>
 			<th>Food item</th>
-			<th>Quantity</th>
+			<th>Quantity (gr)</th>
 			<th>Proteins</th>
 			<th>Carbs</th>
 			<th>Fats</th>
 			<th>Calories</th>
 		</tr>
-		{% for food in macros_table.macro_rows %}
+		{% for record in macros_records %}
 		<tr>
-			<td>{{ food.food_name }}</td>
-			<td>{{ food.food_quantity }}</td>
-			<td>0</td>
-			<td>0</td>
-			<td>0</td>
-			<td>0</td>
-		</tr>
+			<td>{{ macros_table.macro_rows.entries[record.id - 1].form.food_name }}</td>
+			<td>{{ macros_table.macro_rows.entries[record.id - 1].form.food_quantity }}</td>
+			<td>{{ record.proteins }}</td>
+			<td>{{ record.carbs }}</td>
+			<td>{{ record.fats }}</td>
+			<td>{{ record.calories }}</td>
+			</tr>
 		{% endfor %}
+
+
 	</table>
 		{{ macros_table.btn_remove_last_row }}
 		{{ macros_table.btn_add_row }}

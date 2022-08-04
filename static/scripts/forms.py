@@ -1,12 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import SelectField, DecimalField, IntegerField, SubmitField, StringField, FieldList, FormField, Label
+from wtforms import SelectField, FloatField, IntegerField, SubmitField, StringField, FieldList, FormField, Label
 from wtforms.validators import InputRequired, NumberRange
 
 
 class HealthForm(FlaskForm):
 	sex = SelectField("What's your sex?", choices=[("Male", "Male"), ("Female", "Female")])
-	weight = DecimalField("Weight (in kg)", places=2, validators=[InputRequired()])
-	height = DecimalField("Height (in cm)", places=2, validators=[InputRequired()])
+	weight = FloatField("Weight (in kg)", validators=[InputRequired()])
+	height = FloatField("Height (in cm)", validators=[InputRequired()])
 	age = IntegerField("Age", validators=[InputRequired(), NumberRange(min=12, max=99)])
 	submit = SubmitField("Submit")
 
@@ -14,9 +14,8 @@ class HealthForm(FlaskForm):
 
 
 class MacrosRow(FlaskForm):
-	food_name = StringField()
-	food_quantity = DecimalField()
-	macros = (0, 0, 0, 0)
+	food_name = StringField(default="")
+	food_quantity = FloatField()
 
 
 class MacrosTable(FlaskForm):

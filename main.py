@@ -27,7 +27,7 @@ headers = {
 class Macros(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	food_name = db.Column(db.String(250), nullable=False)
-	food_quantity = db.Column(db.DECIMAL(5, 2), nullable=False)
+	food_quantity = db.Column(db.Float(precision=2), nullable=False)
 	proteins = db.Column(db.Integer)
 	carbs = db.Column(db.Integer)
 	fats = db.Column(db.Integer)
@@ -58,6 +58,9 @@ def home():
 @app.route('/macros', methods=["GET", "POST"])
 def macros():
 	macros_table: MacrosTable = MacrosTable()
+	macros_records = db.session.query(Macros).all()
+	# row_change = 0
+
 	if request.method == 'POST':
 		# add new table row
 		if macros_table.btn_add_row.data:
@@ -74,15 +77,30 @@ def macros():
 		elif macros_table.btn_update.data:
 			macros_table.btn_update.data = False
 
-			# api call function
-			# only accepts 1 entry
-			def api_call(food_entry):
+			def save_to_db(food_entry, id = -1):
 				response = requests.request("GET", url, headers=headers, params={"ingr": food_entry.data["food_name"]})
 				response.raise_for_status()
-				print(response.json())
+				macros = response.json()["parsed"][0]["food"]["nutrients"]
 
+				macros["PROCNT"] = macros["PROCNT"] / 100 * food_entry.data["food_quantity"]
+				macros["CHOCDF"] = macros["CHOCDF"] / 100 * food_entry.data["food_quantity"]
+				macros["FAT"] = macros["FAT"] / 100 * food_entry.data["food_quantity"]
+				macros["ENERC_KCAL"] = macros["ENERC_KCAL"] / 100 * food_entry.data["food_quantity"]
 
-			macros_records = db.session.query(Macros).all()
+				if id == -1:
+					macros_record = Macros()
+				else:
+					macros_record = Macros.query.get(id)
+
+				macros_record.food_name = food_entry.data["food_name"]
+				macros_record.food_quantity = food_entry.data["food_quantity"]
+				macros_record.proteins = macros["PROCNT"]
+				macros_record.carbs = macros["CHOCDF"]
+				macros_record.fats = macros["FAT"]
+				macros_record.calories = macros["ENERC_KCAL"]
+				db.session.add(macros_record)
+				db.session.commit()
+
 			total_entries_count = len(macros_table.macro_rows.entries)
 			total_records_count = len(macros_records)
 			new_entries_count = total_entries_count - total_records_count
@@ -92,11 +110,12 @@ def macros():
 				# make 2 lists:
 				# update_entries: list of entries that exist in db, but need to be checked if food_name and food_quantity changed
 				# new_entries: list of entries that are new and need to be api_call'd
-				update_entries = macros_table.macro_rows.entries[total_records_count:]
-				new_entries = macros_table.macro_rows.entries[-new_entries_count:]
+
+				update_entries = macros_table.macro_rows.entries[0:total_records_count]
+				new_entries = macros_table.macro_rows.entries[new_entries_count:]
 			else:
 				# if there are fewer entries than records
-				# it means now new entries got made or entries got deleted
+				# it means now new entries got made
 				update_entries = macros_table.macro_rows.entries
 				new_entries = 0
 
@@ -105,38 +124,36 @@ def macros():
 					# if so delete the last entries
 					for entry_del in macros_records[new_entries_count:]:
 						db.session.delete(entry_del)
-				db.session.commit()
+					db.session.commit()
 
 			id = 0
 			dict_upd_food_names = {}
 			for entry_upd, record_upd in zip(update_entries, macros_records):
 				id += 1
 				if entry_upd.data["food_name"] != record_upd.food_name:
-					dict_upd_food_names = {
-						id: entry_upd
-					}
+					dict_upd_food_names[id] = entry_upd
+
 				elif entry_upd.data["food_quantity"] != record_upd.food_quantity:
 					# divide macros by food_record.food_quantity
 					# multiply food_entry.food_quantity.data
-					# save in db
-					# round is not working (bug)
-					multiplier = record_upd.food_quantity * entry_upd.food_quantity.data
-					record_upd.proteins = round(record_upd.proteins / multiplier)
-					record_upd.carbs = round(record_upd.carbs / multiplier)
-					record_upd.fats = round(record_upd.fats / multiplier)
-					record_upd.calories = round(record_upd.calories / multiplier)
+					record_upd.proteins = round(record_upd.proteins / record_upd.food_quantity * entry_upd.food_quantity.data, 2)
+					record_upd.carbs = round(record_upd.carbs / record_upd.food_quantity * entry_upd.food_quantity.data, 2)
+					record_upd.fats = round(record_upd.fats / record_upd.food_quantity * entry_upd.food_quantity.data, 2)
+					record_upd.calories = round(record_upd.calories / record_upd.food_quantity * entry_upd.food_quantity.data, 2)
 					record_upd.food_quantity = entry_upd.data["food_quantity"]
 
-			for id, entry_upd in dict_upd_food_names:
-				api_call(entry_upd)
-				record_upd = Macros.query.get(id)
+
+			# update entries with id
+			for id, entry_upd in dict_upd_food_names.items():
+				save_to_db(entry_upd, id)
 
 			if new_entries != 0:
 				for new_entry in new_entries:
-					api_call(new_entry)
-			db.session.commit()
+					save_to_db(new_entry)
 
-	return flask.render_template("macros.html", macros_table=macros_table)
+	for record in range(len(macros_records) - 1):
+		macros_table.macro_rows.append_entry()
+	return flask.render_template("macros.html", macros_table=macros_table, macros_records=macros_records)
 
 
 if __name__ == "__main__":
