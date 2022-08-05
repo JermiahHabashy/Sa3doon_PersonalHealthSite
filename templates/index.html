@@ -7,14 +7,26 @@
 	{% import "bootstrap/wtf.html" as wtf %}
 </head>
 <body>
-	{{ wtf.quick_form(health_form) }}
-	<p>BMR: {{BMR}}</p>
-	<p>Bulk: {{BMR+300}}</p>
-	<p>Cut: {{BMR-300}}</p>
-	{% block show_next_page_url %}
-		{% if BMR != 0 %}
-		<a href="{{ url_for('macros') }}">Go to macro's page</a>
+	<form method="post" action={{url_for('home')}}>
+		{{ health_form.sex.label }} {{ health_form.sex }} <br>
+		{{ health_form.weight.label }} {{ health_form.weight }} <br>
+		{{ health_form.height.label }} {{ health_form.height }} <br>
+		{{ health_form.age.label }} {{ health_form.age }} <br>
+		{{ health_form.submit_info }} <br>
+
+	{% block show_radio_buttons %}
+		{% if health_form.submit_info.data %}
+			{{ health_form.diet_select.label }} {{ health_form.diet_select }} <br>
+			{{ health_form.submit_diet }} <br>
 		{% endif %}
-	{% endblock show_next_page_url %}
+	{% endblock show_radio_buttons %}
+	</form>
+
+	{% block show_next_page_link %}
+		{% if health_form.submit_diet.data %}
+			<a href="{{ url_for('macros') }}">Go to macro's page</a>
+		{% endif %}
+	{% endblock show_next_page_link %}
+
 </body>
 </html>

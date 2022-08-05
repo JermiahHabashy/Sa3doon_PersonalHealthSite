@@ -4,14 +4,14 @@ import requests
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask import request
-from static.scripts.forms import HealthForm, MacrosTable, MacrosRow
+from static.scripts.forms import HealthForm, MacrosTable
 
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 
 Bootstrap(app)
 # connect to db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///static/database/macros.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///static/database/database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db: SQLAlchemy = SQLAlchemy(app)
 
@@ -33,6 +33,13 @@ class Macros(db.Model):
 	fats = db.Column(db.Integer, default=0)
 	calories = db.Column(db.Integer, default=0)
 
+class Diet(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	proteins = db.Column(db.Integer)
+	carbs = db.Column(db.Integer)
+	fats = db.Column(db.Integer)
+	calories = db.Column(db.Integer)
+
 
 db.create_all()
 db.session.commit()
@@ -41,18 +48,32 @@ db.session.commit()
 @app.route('/', methods=["GET", "POST"])
 def home():
 	health_form: HealthForm = HealthForm()
-	BMR = 0
-	if health_form.validate_on_submit():
-		# base_bmr = 10 x weight(kg) + 6.25 x height(cm) - 5 x age(y) + 5 (man) = BMR10 x weight(kg) + 6.25 x height(
-		# cm) - 5 x age(y)
-		# for men: +5
-		# for women: -161
-		BMR = 10 * float(health_form.weight.data) + 6.25 * float(health_form.height.data) - 5 * health_form.age.data
-		if health_form.sex.data == "Male":
-			BMR += 5
-		else:
-			BMR -= 161
-	return flask.render_template("index.html", health_form=health_form, BMR=BMR)
+	bmr = 0
+	diet_record: Diet = Diet()
+	db.session.add(diet_record)
+	if request.method == "POST":
+		if health_form.submit_info.data:
+			# base_bmr = 10 x weight(kg) + 6.25 x height(cm) - 5 x age(y) + 5 (man) = BMR10 x weight(kg) + 6.25 x height(
+			# cm) - 5 x age(y)
+			# for men: +5
+			# for women: -161
+			bmr = 10 * float(health_form.weight.data) + 6.25 * float(health_form.height.data) - 5 * health_form.age.data
+			if health_form.sex.data == "Male":
+				bmr += 5
+			else:
+				bmr -= 161
+			health_form.diet_select.choices = [(bmr, f"BMR: {bmr}"), (bmr+300, f"Bulk: {bmr+300}"), (bmr-300, f"Cut: {bmr-300}")]
+
+		elif health_form.submit_diet.data:
+			chosen_diet = float(health_form.diet_select.data)
+			diet_record.id = 1
+			diet_record.proteins = chosen_diet * 0.4 / 4
+			diet_record.carbs = chosen_diet * 0.2 / 4
+			diet_record.fats = chosen_diet * 0.3 / 9
+			diet_record.calories = chosen_diet
+			db.session.commit()
+
+	return flask.render_template("index.html", health_form=health_form)
 
 
 macros_records = db.session.query(Macros).all()

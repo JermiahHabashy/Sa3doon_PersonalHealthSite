@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="macros" uuid="f98d04a4-3823-4b10-a280-05b8d15e58b4">
+    <data-source source="LOCAL" name="database" uuid="1b45edd8-b384-4746-804b-9895dcec3abf">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:D:\Documents\Werk\Programmeren\PyCharm Projects\Clients\Sa3doon_PersonalHealthSite\static\database\macros.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:D:\Documents\Werk\Programmeren\PyCharm Projects\Clients\Sa3doon_PersonalHealthSite\static\database\database.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
       <libraries>
         <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.31.1/sqlite-jdbc-3.31.1.jar</url>
+          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.38.0/sqlite-jdbc-3.38.0.jar</url>
         </library>
         <library>
           <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.31.1/license.txt</url>
