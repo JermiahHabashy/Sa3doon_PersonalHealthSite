@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+{% extends 'bootstrap/base.html' %}
 <head>
 	<meta charset="UTF-8">
 	<title>Macro's</title>
@@ -26,6 +27,22 @@
 			<td>{{ record.calories }}</td>
 		</tr>
 		{% endfor %}
+		<tr>
+			<td></td>
+			<td>Remaining:</td>
+			<td>{{ diets[0].proteins }}</td>
+			<td>{{ diets[0].carbs }}</td>
+			<td>{{ diets[0].fats }}</td>
+			<td>{{ diets[0].calories }}</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td>Total:</td>
+			<td>{{ diets[1].proteins }}</td>
+			<td>{{ diets[1].carbs }}</td>
+			<td>{{ diets[1].fats }} </td>
+			<td>{{ diets[1].calories }}</td>
+		</tr>
 
 
 	</table>

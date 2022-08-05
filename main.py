@@ -1,5 +1,6 @@
 import os
 import flask
+from flask import url_for, redirect
 import requests
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
@@ -27,11 +28,12 @@ headers = {
 class Macros(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	food_name = db.Column(db.String(250), nullable=False)
-	food_quantity = db.Column(db.Float(precision=2), nullable=False)
+	food_quantity = db.Column(db.Integer, nullable=False)
 	proteins = db.Column(db.Integer, default=0)
 	carbs = db.Column(db.Integer, default=0)
 	fats = db.Column(db.Integer, default=0)
 	calories = db.Column(db.Integer, default=0)
+
 
 class Diet(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
@@ -49,15 +51,14 @@ db.session.commit()
 def home():
 	health_form: HealthForm = HealthForm()
 	bmr = 0
-	diet_record: Diet = Diet()
-	db.session.add(diet_record)
+	diet: Diet = Diet()
 	if request.method == "POST":
 		if health_form.submit_info.data:
 			# base_bmr = 10 x weight(kg) + 6.25 x height(cm) - 5 x age(y) + 5 (man) = BMR10 x weight(kg) + 6.25 x height(
 			# cm) - 5 x age(y)
 			# for men: +5
 			# for women: -161
-			bmr = 10 * float(health_form.weight.data) + 6.25 * float(health_form.height.data) - 5 * health_form.age.data
+			bmr = int(10 * int(health_form.weight.data) + 6.25 * int(health_form.height.data) - 5 * health_form.age.data)
 			if health_form.sex.data == "Male":
 				bmr += 5
 			else:
@@ -65,30 +66,47 @@ def home():
 			health_form.diet_select.choices = [(bmr, f"BMR: {bmr}"), (bmr+300, f"Bulk: {bmr+300}"), (bmr-300, f"Cut: {bmr-300}")]
 
 		elif health_form.submit_diet.data:
-			chosen_diet = float(health_form.diet_select.data)
-			diet_record.id = 1
-			diet_record.proteins = chosen_diet * 0.4 / 4
-			diet_record.carbs = chosen_diet * 0.2 / 4
-			diet_record.fats = chosen_diet * 0.3 / 9
-			diet_record.calories = chosen_diet
+			chosen_diet = int(health_form.diet_select.data)
+			diet.proteins = round(chosen_diet * 0.4 / 4, 2)
+			diet.carbs = round(chosen_diet * 0.2 / 4, 2)
+			diet.fats = round(chosen_diet * 0.3 / 9, 2)
+			diet.calories = round(chosen_diet, 2)
+
+			dup_diet = Diet()
+			dup_diet.proteins = round(chosen_diet * 0.4 / 4, 2)
+			dup_diet.carbs = round(chosen_diet * 0.2 / 4, 2)
+			dup_diet.fats = round(chosen_diet * 0.3 / 9, 2)
+			dup_diet.calories = round(chosen_diet, 2)
+
+			db.session.add(diet)
+			db.session.add(dup_diet)
 			db.session.commit()
+			diets = db.session.query(Diet).all()
+			return redirect("/macros")
 
 	return flask.render_template("index.html", health_form=health_form)
 
 
 macros_records = db.session.query(Macros).all()
-
+remaining_macros = []
 
 @app.route('/macros', methods=["GET", "POST"])
 def macros():
 	macros_table: MacrosTable = MacrosTable()
+	diets = db.session.query(Diet).all()
+
 
 	if request.method == "GET":
-
 		for record_nr in range(len(macros_records)):
 			macros_table.macro_rows.append_entry()
 			macros_table.macro_rows.entries[record_nr].form.food_name.data = macros_records[record_nr].food_name
 			macros_table.macro_rows.entries[record_nr].form.food_quantity.data = macros_records[record_nr].food_quantity
+			diets[0].proteins -= macros_records[record_nr].proteins
+			diets[0].carbs -= macros_records[record_nr].carbs
+			diets[0].fats -= macros_records[record_nr].fats
+			diets[0].calories -= macros_records[record_nr].calories
+			db.session.commit()
+
 	elif request.method == 'POST':
 		# add new table row
 		if macros_table.btn_add_row.data:
@@ -114,7 +132,12 @@ def macros():
 
 			# delete last record from db
 			if len(db.session.query(Macros).all()) >= len(macros_records):
-				db.session.delete(Macros.query.get(len(macros_records)))
+				record_del = Macros.query.get(len(macros_records))
+				diets[0].proteins += record_del.proteins
+				diets[0].carbs += record_del.carbs
+				diets[0].fats += record_del.fats
+				diets[0].calories += record_del.calories
+				db.session.delete(record_del)
 				db.session.commit()
 
 			macros_records.pop()
@@ -129,18 +152,26 @@ def macros():
 				response.raise_for_status()
 				macros = response.json()["parsed"][0]["food"]["nutrients"]
 
-				record.proteins = macros["PROCNT"] / 100 * record.food_quantity
-				record.carbs = macros["CHOCDF"] / 100 * record.food_quantity
-				record.fats = macros["FAT"] / 100 * record.food_quantity
-				record.calories = macros["ENERC_KCAL"] / 100 * record.food_quantity
+				record.proteins = round(int(macros["PROCNT"] / 100 * record.food_quantity), 2)
+				record.carbs = round(int(macros["CHOCDF"] / 100 * record.food_quantity), 2)
+				record.fats = round(int(macros["FAT"] / 100 * record.food_quantity), 2)
+				record.calories = round(int(macros["ENERC_KCAL"] / 100 * record.food_quantity), 2)
 
 				if id < 0:
 					db.session.add(record)
 
+				subtract_diet(record)
+
+			def subtract_diet(record):
+				diets[0].proteins -= record.proteins
+				diets[0].carbs -= record.carbs
+				diets[0].fats -= record.fats
+				diets[0].calories -= record.calories
+
 			id = 0
 			for record in macros_records:
 				macro_row_food_name = macros_table.macro_rows.entries[id].data["food_name"]
-				macro_row_food_quantity = macros_table.macro_rows.entries[id].data["food_quantity"]
+				macro_row_food_quantity = int(macros_table.macro_rows.entries[id].data["food_quantity"])
 				id += 1
 				if record.food_name is None:
 					record.food_name = macro_row_food_name
@@ -150,14 +181,15 @@ def macros():
 					if macro_row_food_name != record.food_name:
 						api_call(record, id)
 					elif macro_row_food_quantity != record.food_quantity:
-						record.proteins = round(record.proteins / record.food_quantity * macro_row_food_quantity, 2)
-						record.carbs = round(record.carbs / record.food_quantity * macro_row_food_quantity, 2)
-						record.fats = round(record.fats / record.food_quantity * macro_row_food_quantity, 2)
-						record.calories = round(record.calories / record.food_quantity * macro_row_food_quantity, 2)
+						record.proteins = round(int(record.proteins / record.food_quantity * macro_row_food_quantity), 2)
+						record.carbs = round(int(record.carbs / record.food_quantity * macro_row_food_quantity), 2)
+						record.fats = round(int(record.fats / record.food_quantity * macro_row_food_quantity), 2)
+						record.calories = round(int(record.calories / record.food_quantity * macro_row_food_quantity), 2)
 						record.food_quantity = macro_row_food_quantity
+						subtract_diet(record)
 				db.session.commit()
 
-	return flask.render_template("macros.html", macros_table=macros_table, macros_records=macros_records)
+	return flask.render_template("macros.html", macros_table=macros_table, macros_records=macros_records, diets=diets)
 
 
 if __name__ == "__main__":
