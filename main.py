@@ -151,10 +151,10 @@ def macros():
 				for new_entry in new_entries:
 					save_to_db(new_entry)
 
-	for record_nr in range(len(macros_records) - 1):
+	for record_nr in range(len(macros_records)):
 		macros_table.macro_rows.append_entry()
-		macros_table.macro_rows.entries[record_nr].form.food_name.data = macros_records.query.get(record_nr).food_name
-		macros_table.macro_rows.entries[record_nr].form.food_quantity.data = macros_records.query.get(record_nr).food_quantity
+		macros_table.macro_rows.entries[record_nr].form.food_name.data = macros_records[record_nr].food_name
+		macros_table.macro_rows.entries[record_nr].form.food_quantity.data = macros_records[record_nr].food_quantity
 
 	return flask.render_template("macros.html", macros_table=macros_table, macros_records=macros_records)
 
